@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Kiểm Tra Toán - Cô Thi Hồng Hạnh</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root { --primary-color: #0056b3; --success-color: #28a745; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 850px; background: white; margin: auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 2px solid var(--primary-color); margin-bottom: 25px; padding-bottom: 10px; }
+        .info-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; background: #e9ecef; padding: 15px; border-radius: 8px; }
+        .info-section input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 90%; }
+        .timer { font-size: 24px; color: #dc3545; font-weight: bold; text-align: right; position: sticky; top: 10px; background: white; padding: 5px; z-index: 100; }
+        .question { margin-bottom: 30px; padding: 15px; border: 1px solid #dee2e6; border-radius: 8px; transition: 0.3s; }
+        .question:hover { border-color: var(--primary-color); }
+        .options { margin-left: 15px; }
+        .options label { display: block; margin: 10px 0; cursor: pointer; }
+        .btn-submit { background: var(--success-color); color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-size: 20px; font-weight: bold; transition: 0.3s; }
+        .btn-submit:hover { background: #218838; }
+        #result { display: none; text-align: center; padding: 30px; }
+        .score-big { font-size: 48px; color: var(--primary-color); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>HỆ THỐNG KIỂM TRA TRỰC TUYẾN</h2>
+        <p>GV: Thi Hồng Hạnh - THPT Chuyên Trần Văn Giàu</p>
+    </div>
+
+    <div id="quiz-content">
+        <div class="info-section">
+            <div>Họ và Tên: <br><input type="text" id="studentName" placeholder="Nhập tên của bạn..."></div>
+            <div>Lớp: <br><input type="text" id="studentClass" placeholder="Ví dụ: 10 Toán..."></div>
+        </div>
+
+        <div class="timer">Thời gian còn lại: <span id="time">20:00</span></div>
+
+        <div id="questions-container">
+            <div class="question">
+                <p><b>Câu 1:</b> Tìm tập nghiệm $S$ của phương trình $x^2 - 5x + 6 = 0$.</p>
+                <div class="options">
+                    <label><input type="radio" name="q1" value="A"> A. $S = \{1; 6\}$</label>
+                    <label><input type="radio" name="q1" value="B"> B. $S = \{2; 3\}$</label>
+                    <label><input type="radio" name="q1" value="C"> C. $S = \{-2; -3\}$</label>
+                    <label><input type="radio" name="q1" value="D"> D. $S = \{5; 6\}$</label>
+                </div>
+            </div>
+
+            <div class="question">
+                <p><b>Câu 2:</b> Tính đạo hàm của hàm số $y = \sin(x^2 + 1)$.</p>
+                <div class="options">
+                    <label><input type="radio" name="q2" value="A"> A. $y' = 2x \cos(x^2 + 1)$</label>
+                    <label><input type="radio" name="q2" value="B"> B. $y' = \cos(x^2 + 1)$</label>
+                    <label><input type="radio" name="q2" value="C"> C. $y' = -2x \cos(x^2 + 1)$</label>
+                    <label><input type="radio" name="q2" value="D"> D. $y' = 2 \cos(x^2 + 1)$</label>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-submit" onclick="submitQuiz()">NỘP BÀI KIỂM TRA</button>
+    </div>
+
+    <div id="result">
+        <h2>KẾT QUẢ BÀI LÀM</h2>
+        <p id="displayInfo"></p>
+        <div class="score-big"><span id="score">0</span> / 2</div>
+        <p>Cảm ơn bạn đã hoàn thành bài thi!</p>
+        <button onclick="location.reload()" style="padding: 10px; border: none; background: #6c757d; color: white; border-radius: 5px; cursor: pointer;">Làm lại</button>
+    </div>
+</div>
+
+<script>
+    // 1. Quản lý thời gian
+    let timeInSeconds = 1200; // 20 phút
+    const timerElement = document.getElementById('time');
+    
+    const countdown = setInterval(() => {
+        let minutes = Math.floor(timeInSeconds / 60);
+        let seconds = timeInSeconds % 60;
+        timerElement.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        if (timeInSeconds <= 0) {
+            clearInterval(countdown);
+            submitQuiz();
+        }
+        timeInSeconds--;
+    }, 1000);
+
+    // 2. Chấm điểm
+    function submitQuiz() {
+        const name = document.getElementById('studentName').value;
+        const className = document.getElementById('studentClass').value;
+
+        if (!name || !className) {
+            alert("Vui lòng nhập đầy đủ Họ tên và Lớp trước khi nộp bài!");
+            return;
+        }
+
+        let score = 0;
+        const answers = { q1: "B", q2: "A" }; // Đáp án đúng ở đây
+        
+        if (document.querySelector('input[name="q1"]:checked')?.value === answers.q1) score++;
+        if (document.querySelector('input[name="q2"]:checked')?.value === answers.q2) score++;
+
+        // Hiển thị kết quả
+        document.getElementById('quiz-content').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('score').innerText = score;
+        document.getElementById('displayInfo').innerText = `Học sinh: ${name} - Lớp: ${className}`;
+        
+        clearInterval(countdown);
+    }
+</script>
+
+</body>
+</html>
